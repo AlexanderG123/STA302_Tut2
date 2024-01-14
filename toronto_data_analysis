@@ -1,0 +1,65 @@
+---
+title: "Toronto Data Analysis"
+format: html
+---
+```{r}
+library(dplyr)
+library(opendatatoronto)
+library(tidyverse)
+library(janitor)
+# get package
+package <- show_package("ea1d6e57-87af-4e23-b722-6c1f5aa18a8d")
+package
+
+# get all resources for this package
+resources <- list_package_resources("ea1d6e57-87af-4e23-b722-6c1f5aa18a8d")
+
+# identify datastore resources; by default, Toronto Open Data sets datastore resource format to CSV for non-geospatial and GeoJSON for geospatial resources
+datastore_resources <- filter(resources, tolower(format) %in% c('csv', 'geojson'))
+
+# load the first datastore resource as a sample
+data <- filter(datastore_resources, row_number()==1) %>% get_resource()
+data
+```
+
+```{r}
+write_csv(x = data, file = "raw_dine_data.csv")
+
+```
+
+```{r}
+raw_dine_data <-
+ read_csv(
+   file = "raw_dine_data.csv",
+   show_col_types = FALSE
+ )
+# Make the names easier to type
+cleaned_dine_data <-
+ clean_names(raw_dine_data)
+
+# Have a look at the first six rows
+head(cleaned_dine_data)
+
+```
+
+```{r}
+cleaned_dine_data <-
+ cleaned_dine_data |>
+ select(amount_fined, min_inspections_per_year)
+
+cleaned_dine_data |>
+ count(amount_fined)
+
+```
+
+```{r}
+cleaned_dine_data|>
+ ggplot(aes(x = min_inspections_per_year)) + # aes abbreviates "aesthetics"
+ geom_bar()
+
+cleaned_dine_data |>
+ ggplot(aes(x = min_inspections_per_year)) +
+ geom_bar() +
+ theme_minimal() + # Make the theme neater
+ labs(x = "Minimum number of inspections per year", y = "Number of restaurants") # Make labels more meaningful
+```
